@@ -92,12 +92,15 @@ getCurrentTally = () ->
     events = await engContract.getPastEvents("ComputeTask",
         fromBlock: 0
     )
-    input = events[events.length - 1].returnValues.callableArgs
 
-    # decode data
-    rawVotes = rlp.decode(input)
-    votes = rawVotes[0]
-    numVotes.set(votes.length)
+    eventsLength = events.length
+    if eventsLength > 0
+        input = events[eventsLength - 1].returnValues.callableArgs
+
+        # decode data
+        rawVotes = rlp.decode(input)
+        votes = rawVotes[0]
+        numVotes.set(votes.length)
 
     tally.set(await votingContract.methods.tally().call())
 
