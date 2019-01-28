@@ -1,7 +1,7 @@
 VOTING_ADDRESS = "0xc952b2291e5d913db0a91367cb643d12802e4ff0"
 ENIGMA_ADDRESS = "0xffd5ce90e42e20c5d5259cf1fb15dd123cd5ccbe"
 
-engUtils = require "../../enigma/enigma-utils"
+engUtils = require "../../utils/enigma-utils"
 rlp = require "rlp"
 
 Web3 = require("web3")

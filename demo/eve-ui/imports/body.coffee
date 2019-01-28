@@ -6,7 +6,9 @@ ENIGMA_ADDRESS = "0x79e137337d87729823704c023a6ba9de578799ba"
 
 Web3 = require "web3"
 web3 = window.web3
-web3 = new Web3(web3.currentProvider)
+Web3Utils = require "./utils/web3Utils"
+
+web3 = Web3Utils.detectWeb3(web3)
 
 votingABI = require "./abi/Voting.json"
 votingContract = new web3.eth.Contract(votingABI, VOTING_ADDRESS)
@@ -19,7 +21,7 @@ numVotes = new ReactiveVar(0)
 hasVoted = new ReactiveVar(false)
 userAddress = new ReactiveVar("")
 
-engUtils = require "./enigma-utils.js"
+engUtils = require "./utils/enigma-utils.js"
 rlp = require "rlp"
 config = require "./config.js"
 

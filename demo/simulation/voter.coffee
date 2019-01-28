@@ -1,7 +1,7 @@
 VOTING_ADDRESS = "0xc952b2291e5d913db0a91367cb643d12802e4ff0"
 vote = "1"
 
-engUtils = require "../../enigma/enigma-utils"
+engUtils = require "../../utils/enigma-utils"
 
 Voting = artifacts.require "Voting"
 
