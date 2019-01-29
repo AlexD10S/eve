@@ -1,19 +1,17 @@
 import "./body.html"
 import { ReactiveVar } from 'meteor/reactive-var'
 
-VOTING_ADDRESS = "0xa8c00edd3eabbd00ef02451239d1fcb68102a174"
-ENIGMA_ADDRESS = "0x79e137337d87729823704c023a6ba9de578799ba"
-
 Web3 = require "web3"
 web3 = window.web3
 Web3Utils = require "./utils/web3Utils"
 
 web3 = Web3Utils.detectWeb3(web3)
 
-votingABI = require "./abi/Voting.json"
-votingContract = new web3.eth.Contract(votingABI, VOTING_ADDRESS)
-engABI = require "./abi/Enigma.json"
-engContract = new web3.eth.Contract(engABI, ENIGMA_ADDRESS)
+# initialise contracts
+votingContractJSON = require "./abi/Voting.json"
+votingContract = Web3Utils.instantiateContract(web3, votingContractJSON)
+engContractJSON = require "./abi/Enigma.json"
+engContract = Web3Utils.instantiateContract(web3, engContractJSON)
 
 tally = new ReactiveVar(0)
 vote = new ReactiveVar("")
@@ -89,28 +87,34 @@ tallyVotes = () ->
 
 
 getCurrentTally = () ->
-    events = await engContract.getPastEvents("ComputeTask",
-        fromBlock: 0
-    )
+    engContract.getPastEvents("ComputeTask",fromBlock: 0)
+    .then (events) ->
+        eventsLength = events.length
+        if eventsLength > 0
+            input = events[eventsLength - 1].returnValues.callableArgs
 
-    eventsLength = events.length
-    if eventsLength > 0
-        input = events[eventsLength - 1].returnValues.callableArgs
+            # decode data
+            rawVotes = rlp.decode(input)
+            votes = rawVotes[0]
+            numVotes.set(votes.length)
 
-        # decode data
-        rawVotes = rlp.decode(input)
-        votes = rawVotes[0]
-        numVotes.set(votes.length)
-
-    tally.set(await votingContract.methods.tally().call())
-
+    votingContract.methods.tally().call()
+    .then (t) ->
+        tally.set(t)
 
 $("document").ready(
     () ->
         web3.eth.defaultAccount = (await web3.eth.getAccounts())[0]
         userAddress.set(web3.eth.defaultAccount)
-        hasVoted.set(await votingContract.methods.hasVoted(web3.eth.defaultAccount).call())
-        await getCurrentTally()
+
+        # FIXME i would love to pass these global variables as params the functions instead...
+        votingContract = await votingContract
+        engContract = await engContract
+
+        votingContract.methods.hasVoted(web3.eth.defaultAccount).call()
+        .then (voted) ->
+            hasVoted.set(voted)
+        getCurrentTally()
 )
 
 
