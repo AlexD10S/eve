@@ -11,14 +11,15 @@ detectWeb3 = () ->
   return new Web3(web3.currentProvider)
 
 getContractAddress = (web3, contractJSON) ->
-  networkId = await web3.eth.net.getId()
-  deployedAddress = contractJSON.networks[networkId].address
+  deployedAddress =
+    web3.eth.net.getId()
+    .then (networkId) ->
+      contractJSON.networks[networkId].address
   return deployedAddress
 
 instantiateContract = (web3, contractJSON) ->
   deployedAddress = getContractAddress(web3, contractJSON)
-  contract = new web3.eth.Contract(contractJSON.abi, deployedAddress)
-  return contract
+  return new web3.eth.Contract(contractJSON.abi, await deployedAddress)
 
 exports.detectWeb3 = detectWeb3
 exports.getContractAddress = getContractAddress
