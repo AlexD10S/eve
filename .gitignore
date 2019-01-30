@@ -6,4 +6,5 @@ demo/eve-ui/imports/body.js
 demo/simulation/voter.js
 demo/simulation/worker.js
 utils/web3Utils.js
+.env
 
