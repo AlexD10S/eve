@@ -47,9 +47,12 @@ submitVote = (_vote) ->
 
     # audit submitted vote
     voteID = await votingContract.methods.vote(encryptedVote).call()
-    await votingContract.methods.vote(encryptedVote).send({ from: web3.eth.defaultAccount })
+    votingAccount = web3.eth.defaultAccount
+
+    await votingContract.methods.vote(encryptedVote).send({ from: votingAccount })
     submittedVote = await votingContract.methods.votes(voteID).call()
     console.log "Your submitted vote is #{submittedVote}, which is#{if submittedVote == encryptedVote then "" else "not"} equal to your original vote"
+    updateHasVoted(votingContract, votingAccount)
 
 
 tallyVotes = () ->
@@ -102,6 +105,13 @@ getCurrentTally = () ->
     .then (t) ->
         tally.set(t)
 
+
+updateHasVoted = (votingContract, account) ->
+  votingContract.methods.hasVoted(account).call()
+  .then (voted) ->
+    hasVoted.set(voted)
+
+
 $("document").ready(
     () ->
         web3.eth.defaultAccount = (await web3.eth.getAccounts())[0]
@@ -111,9 +121,7 @@ $("document").ready(
         votingContract = await votingContract
         engContract = await engContract
 
-        votingContract.methods.hasVoted(web3.eth.defaultAccount).call()
-        .then (voted) ->
-            hasVoted.set(voted)
+        updateHasVoted(votingContract, web3.eth.defaultAccount)
         getCurrentTally()
 )
 
