@@ -59,61 +59,61 @@ submitVote = (_vote) ->
     submittedVote
 
 
-tallyVotes = () ->
+tallyVotes = (fetchEnigmaEvents) ->
     # submit votes to Enigma
     await votingContract.methods.submitVotesForTally().send({ from: web3.eth.defaultAccount })
 
-    events = await engContract.getPastEvents("ComputeTask",
-        fromBlock: 0
-    )
-    input = events[events.length - 1].returnValues.callableArgs
-    console.log "Fetched encrypted input: #{input}"
+    encryptedVotes = await fetchVotes(fetchEnigmaEvents, fromBlock: 0)
 
-    # decode data
-    rawVotes = rlp.decode(input)
-    votes = rawVotes[0]
-    console.log "Encrypted votes: " + votes
-    numVotes.set(votes.length)
+    console.log "Encrypted votes: " + encryptedVotes
 
     # decrypt votes
-    for i in [0..votes.length - 1]
-        votes[i] = engUtils.decryptMessage(derivedKey, removeLeadingZeroes(votes[i].toString("hex")))
+    decryptedVotes =
+      engUtils.decryptMessage(derivedKey, removeLeadingZeroes(encryptedVote.toString("hex"))) for encryptedVote in encryptedVotes
 
-    console.log "Decrypted votes: #{votes}"
+    console.log "Decrypted votes: #{decryptedVotes}"
 
     # tally votes
-    calculatedTally = await votingContract.methods._tallyVotes(votes).call()
+    calculatedTally = await votingContract.methods._tallyVotes(decryptedVotes).call()
     console.log "Tallied votes, result is #{calculatedTally[0]}"
 
     # update voting contract callback
     await votingContract.methods._callback(calculatedTally[0], calculatedTally[1]).send({ from: web3.eth.defaultAccount })
 
     # check tally
-    tally.set(await votingContract.methods.tally().call())
-    console.log "Tally submitted to the voting contract is #{tally.get()}"
+    contractTally = await votingContract.methods.tally().call()
+    console.log "Tally submitted to the voting contract is #{contractTally}"
+
+    return [contractTally, encryptedVotes.length]
 
 
-getCurrentTally = () ->
-    engContract.getPastEvents("ComputeTask",fromBlock: 0)
-    .then (events) ->
-        eventsLength = events.length
-        if eventsLength > 0
-            input = events[eventsLength - 1].returnValues.callableArgs
+fetchVotes = (fetchEnigmaEvents, fromBlock) ->
 
-            # decode data
-            rawVotes = rlp.decode(input)
-            votes = rawVotes[0]
-            numVotes.set(votes.length)
+  events = await fetchEnigmaEvents("ComputeTask", fromBlock)
+  eventsLength = events.length
 
-    votingContract.methods.tally().call()
-    .then (t) ->
-        tally.set(t)
+  if eventsLength > 0
+    input = events[eventsLength - 1].returnValues.callableArgs
+
+    # decode data
+    rawVotes = rlp.decode(input)
+    votes = rawVotes[0]
+    votes
+  else []
 
 
-updateHasVoted = (votingContract, account) ->
-  votingContract.methods.hasVoted(account).call()
-  .then (voted) ->
-    hasVoted.set(voted)
+getCurrentTally = (getEnigmaEvents, getVoteTally) ->
+  votes = await fetchVotes(getEnigmaEvents, fromBlock: 0)
+  numVotes.set(votes.length)
+
+  currentTally = await getVoteTally().call()
+  tally.set(currentTally)
+
+
+# Update value of hasVoted variable using given contract method and account
+updateHasVoted = (getHasVoted, account) ->
+  voted = await getHasVoted(account).call()
+  hasVoted.set(voted)
 
 
 $("document").ready(
@@ -125,8 +125,8 @@ $("document").ready(
         votingContract = await votingContract
         engContract = await engContract
 
-        updateHasVoted(votingContract, web3.eth.defaultAccount)
-        getCurrentTally()
+        updateHasVoted(votingContract.methods.hasVoted.bind(votingContract), web3.eth.defaultAccount)
+        getCurrentTally(engContract.getPastEvents.bind(engContract), votingContract.methods.tally.bind(votingContract))
 )
 
 
@@ -144,11 +144,15 @@ Template.body.events({
         title = event.target.innerText
         switch title
             when "Tally votes & update tally (2 txs)"
-                await tallyVotes()
+                [contractTally, nbVotes] = await tallyVotes(engContract.getPastEvents.bind(engContract))
+                numVotes.set(nbVotes)
+                tally.set(contractTally)
             when "Vote"
                 voteOption = if $("#vote_option")[0].checked then "1" else "0"
-                await submitVote(voteOption)
+                submittedVote = await submitVote(voteOption)
+                updateHasVoted(votingContract.methods.hasVoted.bind(votingContract), web3.eth.defaultAccount)
+                vote.set(submittedVote)
             when "Get current tally"
-                await getCurrentTally()
+                await getCurrentTally(engContract.getPastEvents.bind(engContract), votingContract.methods.tally.bind(votingContract))
 
 })
