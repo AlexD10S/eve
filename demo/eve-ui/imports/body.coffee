@@ -27,7 +27,7 @@ derivedKey = engUtils.getDerivedKey(config.enclavePubKey, config.clientPrivKey)
 
 
 removeLeadingZeroes = (x) ->
-    while x.slice(0, 1) == "0"
+    while x.slice(0, 1) is "0"
         x = x.slice(1)
     return x
 
@@ -51,7 +51,7 @@ submitVote = (_vote) ->
 
     await votingContract.methods.vote(encryptedVote).send({ from: votingAccount })
     submittedVote = await votingContract.methods.votes(voteID).call()
-    console.log "Your submitted vote is #{submittedVote}, which is#{if submittedVote == encryptedVote then "" else "not"} equal to your original vote"
+    console.log "Your submitted vote is #{submittedVote}, which is#{if submittedVote is encryptedVote then "" else "not"} equal to your original vote"
     updateHasVoted(votingContract, votingAccount)
 
 
@@ -117,7 +117,7 @@ $("document").ready(
         web3.eth.defaultAccount = (await web3.eth.getAccounts())[0]
         userAddress.set(web3.eth.defaultAccount)
 
-        # FIXME i would love to pass these global variables as params the functions instead...
+        # FIXME i would love to pass these global variables as params to the functions instead...
         votingContract = await votingContract
         engContract = await engContract
 
