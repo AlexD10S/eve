@@ -32,18 +32,22 @@ removeLeadingZeroes = (x) ->
     return x
 
 
-submitVote = (_vote) ->
-    # encrypt vote
-    encryptedVote = engUtils.encryptMessage(derivedKey, _vote)
-    console.log "Your unprefixed encrypted vote is #{encryptedVote}"
+encryptVote = (vote, encryptionKey) ->
+  # encrypt vote
+  encryptedVote = engUtils.encryptMessage(encryptionKey, vote)
+  console.log "Your unprefixed encrypted vote is #{encryptedVote}"
 
-    # add prefix padding
-    prefix = "0x"
-    for i in [encryptedVote.length..63]
-        prefix += "0"
-    encryptedVote = prefix + encryptedVote
-    vote.set(encryptedVote)
-    console.log "Your encrypted vote is #{encryptedVote}"
+  # add prefix padding
+  prefix = "0x"
+  for i in [encryptedVote.length..63]
+    prefix += "0"
+  encryptedVote = prefix + encryptedVote
+  console.log "Your encrypted vote is #{encryptedVote}"
+  encryptedVote
+
+
+submitVote = (_vote) ->
+    encryptedVote = encryptVote(_vote, derivedKey)
 
     # audit submitted vote
     voteID = await votingContract.methods.vote(encryptedVote).call()
