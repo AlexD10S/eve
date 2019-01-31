@@ -32,9 +32,9 @@ removeLeadingZeroes = (x) ->
     return x
 
 
-encryptVote = (vote, encryptionKey) ->
+encryptVote = (inVote, encryptionKey) ->
   # encrypt vote
-  encryptedVote = engUtils.encryptMessage(encryptionKey, vote)
+  encryptedVote = engUtils.encryptMessage(encryptionKey, inVote)
   console.log "Your unprefixed encrypted vote is #{encryptedVote}"
 
   # add prefix padding
@@ -56,7 +56,7 @@ submitVote = (_vote) ->
     await votingContract.methods.vote(encryptedVote).send({ from: votingAccount })
     submittedVote = await votingContract.methods.votes(voteID).call()
     console.log "Your submitted vote is #{submittedVote}, which is#{if submittedVote is encryptedVote then "" else "not"} equal to your original vote"
-    updateHasVoted(votingContract, votingAccount)
+    submittedVote
 
 
 tallyVotes = () ->
