@@ -1,11 +1,14 @@
 import "./body.html"
 import { ReactiveVar } from 'meteor/reactive-var'
 
+Web3Utils = require "./utils/web3Utils"
+Voting = require './voting'
+
 Web3 = require "web3"
 web3 = window.web3
-Web3Utils = require "./utils/web3Utils"
 
 web3 = Web3Utils.detectWeb3(web3)
+
 
 # initialise contracts
 votingContractJSON = require "./abi/Voting.json"
@@ -19,91 +22,9 @@ numVotes = new ReactiveVar(0)
 hasVoted = new ReactiveVar(false)
 userAddress = new ReactiveVar("")
 
-engUtils = require "./utils/enigma-utils.js"
-rlp = require "rlp"
-config = require "./config.js"
-
-derivedKey = engUtils.getDerivedKey(config.enclavePubKey, config.clientPrivKey)
-
-
-removeLeadingZeroes = (x) ->
-    while x.slice(0, 1) is "0"
-        x = x.slice(1)
-    return x
-
-
-encryptVote = (inVote, encryptionKey) ->
-  # encrypt vote
-  encryptedVote = engUtils.encryptMessage(encryptionKey, inVote)
-  console.log "Your unprefixed encrypted vote is #{encryptedVote}"
-
-  # add prefix padding
-  prefix = "0x"
-  for i in [encryptedVote.length..63]
-    prefix += "0"
-  encryptedVote = prefix + encryptedVote
-  console.log "Your encrypted vote is #{encryptedVote}"
-  encryptedVote
-
-
-submitVote = (_vote) ->
-    encryptedVote = encryptVote(_vote, derivedKey)
-
-    # audit submitted vote
-    voteID = await votingContract.methods.vote(encryptedVote).call()
-    votingAccount = web3.eth.defaultAccount
-
-    await votingContract.methods.vote(encryptedVote).send({ from: votingAccount })
-    submittedVote = await votingContract.methods.votes(voteID).call()
-    console.log "Your submitted vote is #{submittedVote}, which is#{if submittedVote is encryptedVote then "" else "not"} equal to your original vote"
-    submittedVote
-
-
-tallyVotes = (fetchEnigmaEvents) ->
-    # submit votes to Enigma
-    await votingContract.methods.submitVotesForTally().send({ from: web3.eth.defaultAccount })
-
-    encryptedVotes = await fetchVotes(fetchEnigmaEvents, fromBlock: 0)
-
-    console.log "Encrypted votes: " + encryptedVotes
-
-    # decrypt votes
-    decryptedVotes =
-      engUtils.decryptMessage(derivedKey, removeLeadingZeroes(encryptedVote.toString("hex"))) for encryptedVote in encryptedVotes
-
-    console.log "Decrypted votes: #{decryptedVotes}"
-
-    # tally votes
-    calculatedTally = await votingContract.methods._tallyVotes(decryptedVotes).call()
-    console.log "Tallied votes, result is #{calculatedTally[0]}"
-
-    # update voting contract callback
-    await votingContract.methods._callback(calculatedTally[0], calculatedTally[1]).send({ from: web3.eth.defaultAccount })
-
-    # check tally
-    contractTally = await votingContract.methods.tally().call()
-    console.log "Tally submitted to the voting contract is #{contractTally}"
-
-    return [contractTally, encryptedVotes.length]
-
-
-fetchVotes = (fetchEnigmaEvents, fromBlock) ->
-
-  events = await fetchEnigmaEvents("ComputeTask", fromBlock)
-  eventsLength = events.length
-
-  if eventsLength > 0
-    input = events[eventsLength - 1].returnValues.callableArgs
-
-    # decode data
-    rawVotes = rlp.decode(input)
-    votes = rawVotes[0]
-    votes
-  else []
-
 
 getCurrentTally = (getEnigmaEvents, getVoteTally) ->
-  votes = await fetchVotes(getEnigmaEvents, fromBlock: 0)
+  votes = await Voting.fetchVotes(getEnigmaEvents, fromBlock: 0)
   numVotes.set(votes.length)
 
   currentTally = await getVoteTally().call()
@@ -144,12 +65,12 @@ Template.body.events({
         title = event.target.innerText
         switch title
             when "Tally votes & update tally (2 txs)"
-                [contractTally, nbVotes] = await tallyVotes(engContract.getPastEvents.bind(engContract))
+                [contractTally, nbVotes] = await Voting.tallyVotes(engContract.getPastEvents.bind(engContract), votingContract, web3.eth.defaultAccount)
                 numVotes.set(nbVotes)
                 tally.set(contractTally)
             when "Vote"
                 voteOption = if $("#vote_option")[0].checked then "1" else "0"
-                submittedVote = await submitVote(voteOption)
+                submittedVote = await Voting.submitVote(voteOption, votingContract, web3.eth.defaultAccount)
                 updateHasVoted(votingContract.methods.hasVoted.bind(votingContract), web3.eth.defaultAccount)
                 vote.set(submittedVote)
             when "Get current tally"
