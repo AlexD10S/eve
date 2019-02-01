@@ -93,3 +93,17 @@ Once the transactions go through, the current tally will appear, as well as the 
     2. tallyVotes() ensures that only votes that are either 0 or 1 are counted in the tally
 4. Worker submit tally to Enigma contract
 5. Voting contract receives and updates tally in callback()
+
+
+#### Build
+
+- Dependencies:
+  - `meteor`
+  - `npm`
+  - `ganache` (for local development)
+  - `truffle`
+
+- Start ganache
+- Deploy contracts: `truffle migrate --reset --network development`
+- Start dApp: `npm run start`
+

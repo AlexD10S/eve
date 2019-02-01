@@ -1,2 +1,9 @@
 build/
 node_modules/
+*.map
+demo/eve-ui-build/
+demo/eve-ui/imports/body.js
+demo/eve-ui/imports/voting.js
+utils/web3Utils.js
+.env
+
