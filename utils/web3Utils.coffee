@@ -1,4 +1,5 @@
 Web3 = require "web3"
+import { Connect } from 'uport-connect'
 
 detectWeb3 = () ->
   if typeof(web3) != 'undefined'
@@ -6,9 +7,10 @@ detectWeb3 = () ->
     window.web3 = new Web3(window.web3.currentProvider)
   else
     console.log('Web3 injected browser: Fail. You should consider trying MetaMask.')
-    # fallback - use your fallback strategy (local node / hosted node + in-dapp id mgmt / fail)
-    window.web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'))
-  return new Web3(web3.currentProvider)
+    # fallback - use your fallback strategy (uPort)
+    uport = new Connect('EVE', {network: 'ropsten'})
+    window.web3 = uport.getWeb3()
+  return new Web3(window.web3.currentProvider)
 
 getContractAddress = (web3, contractJSON) ->
   deployedAddress =
