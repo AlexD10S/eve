@@ -1,0 +1,80 @@
+version: 2
+jobs:
+  node:
+    working_directory: ~/eve
+    docker:
+      - image: circleci/node:8.9
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - node-{{ arch }}-v2-{{ checksum "package-lock.json" }}
+            - node-{{ arch }}-v2
+
+      - run: npm install
+
+      - save_cache:
+          key: node-{{ arch }}-v2-{{ checksum "package-lock.json" }}
+          paths:
+            - node_modules
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - eve
+
+  app:
+    working_directory: ~/eve/demo/eve-ui
+    docker:
+      - image: circleci/node:8-browsers
+    environment:
+      _JAVA_OPTIONS: "-Xms512m -Xmx1024m"
+#      - image: selenium/standalone-chrome-debug
+    steps:
+      - checkout:
+          path: ~/eve
+      - attach_workspace:
+          at: ~/eve
+      - restore_cache:
+          name: Restore Meteor Cache
+          key: meteor-cache-{{ checksum ".meteor/release" }}
+      - restore_cache:
+          name: Restore NPM Cache
+          key: npm-cache-{{ checksum "package.json" }}
+      - restore_cache:
+          name: Restore Meteor Package Cache
+          key: packages-cache-{{ checksum ".meteor/versions" }}
+      - run: sudo sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen &&    sudo dpkg-reconfigure --frontend=noninteractive locales
+      - run: sudo apt-get install default-jdk
+      - run: curl https://install.meteor.com/ | sh
+      - run: meteor npm install
+      - save_cache:
+          name: Save NPM Cache
+          key: npm-cache-{{ checksum "package.json" }}
+          paths:
+            - '~/.npm'
+            - 'node_modules'
+      - save_cache:
+          name: Save Meteor Cache
+          key: meteor-cache-{{ checksum ".meteor/release" }}
+          paths:
+            - '~/.meteor'
+      - save_cache:
+          key: packages-cache-{{ checksum ".meteor/versions" }}
+          paths:
+            - './.meteor/local/build'
+            - './.meteor/local/bundler-cache'
+            - './.meteor/local/isopacks'
+            - './.meteor/local/plugin-cache'
+      - run:
+          name: Run Test
+          command: echo "There will be tests"
+#            command: ./tests/acceptance_run
+
+workflows:
+  version: 2
+  node-truffle-meteor:
+    jobs:
+      - node
+      - app:
+          requires:
+            - node
