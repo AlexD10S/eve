@@ -13,7 +13,11 @@
 
 ### Run
 - Start ganache
-- Deploy contracts: `truffle migrate --reset --network development`
+- Deploy contracts:
+```
+npm install
+truffle migrate --reset --network development
+```
 - Install dependencies:
 ```
 cd demo/eve-ui
