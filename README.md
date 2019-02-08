@@ -3,7 +3,27 @@
 
 ---
 
-### What is EVE?
+## Build
+
+### Dependencies:
+  - `meteor`
+  - `npm`
+  - `ganache` (for local development)
+  - `truffle`
+
+### Run
+- Start ganache
+- Deploy contracts: `truffle migrate --reset --network development`
+- Install dependencies:
+```
+cd demo/eve-ui
+npm install
+```
+- Start dApp: `npm run start`
+
+---
+
+## What is EVE?
 
 EVE is an *End-to-End Verifiable-Internet-Voting* (E2E-VIV) app based on Ethereum.
 
@@ -40,7 +60,7 @@ Front end: https://gateway.ipfs.io/ipfs/QmWGyKGeTrtdvnfWX5efpisUS5YVgiyJAX5AVeLQ
 
 ---
 
-### Walking through EVE
+## Walking through EVE
 
 This doc will walk you through voting and tallying votes in the current EVE implementation.
 Check out EVE here: https://gateway.ipfs.io/ipfs/QmWGyKGeTrtdvnfWX5efpisUS5YVgiyJAX5AVeLQ3vGW2p/
@@ -95,15 +115,4 @@ Once the transactions go through, the current tally will appear, as well as the 
 5. Voting contract receives and updates tally in callback()
 
 
-#### Build
-
-- Dependencies:
-  - `meteor`
-  - `npm`
-  - `ganache` (for local development)
-  - `truffle`
-
-- Start ganache
-- Deploy contracts: `truffle migrate --reset --network development`
-- Start dApp: `npm run start`
 
