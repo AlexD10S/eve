@@ -67,7 +67,6 @@ jobs:
           path: ~/eve
       - attach_workspace:
           at: ~/
-      - run: ls -R ~/eve
       # deploy smart contracts to local ganache blockchain
       - run:
           command: ~/eve/node_modules/truffle/build/cli.bundled.js migrate --reset --network development

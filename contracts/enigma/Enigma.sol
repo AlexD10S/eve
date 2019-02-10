@@ -5,11 +5,11 @@ import "./zeppelin/ECRecovery.sol";
 import "./utils/GetCode2.sol";
 
 contract IERC20 {
-    function balanceOf(address who) public constant returns (uint256);
+    function balanceOf(address who) public view returns (uint256);
 
     function transfer(address to, uint256 value) public returns (bool);
 
-    function allowance(address owner, address spender) public constant returns (uint256);
+    function allowance(address owner, address spender) public view returns (uint256);
 
     function transferFrom(address from, address to, uint256 value) public returns (bool);
 
@@ -203,7 +203,7 @@ contract Enigma {
     // Verify the task results signature
     function verifyCommitSig(Task task, bytes data, bytes sig)
     internal
-    constant
+    view
     returns (address) {
         // Recreating a data hash to validate the signature
         bytes memory code = GetCode2.at(task.dappContract);
@@ -274,7 +274,7 @@ contract Enigma {
     // Verify the signature submitted while reparameterizing workers
     function verifyParamsSig(uint256 seed, bytes sig)
     internal
-    constant
+    view
     returns (address) {
         bytes32 hash = sha3(seed);
 
@@ -328,7 +328,7 @@ contract Enigma {
     // The workers parameters nearest the specified block number
     function getWorkersParamsIndex(uint256 blockNumber)
     internal
-    constant
+    view
     returns (int8) {
         int8 ci = - 1;
         for (uint i = 0; i < workersParams.length; i++) {
@@ -362,7 +362,7 @@ contract Enigma {
     // Filter out bad values from a list of worker addresses
     function filterWorkers(address[] addrs)
     internal
-    constant
+    view
     returns (address[]) {
         // TODO: I don't know why the list contains empty addresses, investigate
         uint cpt = 0;
