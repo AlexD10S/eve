@@ -23,9 +23,6 @@ jobs:
       - run:
           command: npm install
           working_directory: ~/eve
-      - run:
-          command: npm install truffle
-          working_directory: ~/eve
       - save_cache:
           name: Save NPM Cache
           key: npm-cache-{{ checksum "~/eve/package-lock.json" }}
