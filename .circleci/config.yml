@@ -53,6 +53,8 @@ jobs:
           root: ~/
           paths:
             - eve
+            - .meteor
+            - .npm
 
   app:
     working_directory: ~/eve/demo/eve-ui
@@ -68,7 +70,9 @@ jobs:
       - run:
           command: ~/eve/node_modules/truffle/build/cli.bundled.js migrate --reset --network development
           working_directory: ~/eve
-      - run: ls build/contracts
+#      - run: npm run start
+      - run: ls -lRh ~/.meteor
+      - run: ~/.meteor/meteor run
       - run:
           name: Run Test
           command: echo "There will be tests"
