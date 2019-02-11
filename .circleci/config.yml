@@ -1,0 +1,96 @@
+version: 2
+jobs:
+  node:
+    working_directory: ~/eve/demo/eve-ui
+    docker:
+      - image: circleci/node:8.9
+    steps:
+      - checkout:
+          path: ~/eve
+      # install top level npm dependencies
+      - restore_cache:
+          name: Restore Meteor Cache
+          key: meteor-cache-{{ checksum ".meteor/release" }}
+      - restore_cache:
+          name: Restore NPM Cache
+          key: npm-cache-{{ checksum "~/eve/package.json" }}
+      - restore_cache:
+          name: Restore Meteor Package Cache
+          key: packages-cache-{{ checksum ".meteor/versions" }}
+      - restore_cache:
+          name: Restore Node cache
+          key: node-app-{{ checksum "package.json" }}
+      - run:
+          command: npm install
+          working_directory: ~/eve
+      - save_cache:
+          name: Save NPM Cache
+          key: npm-cache-{{ checksum "~/eve/package.json" }}
+          paths:
+            - '~/.npm'
+            - '~/eve/node_modules'
+      # install meteor
+      - run: curl https://install.meteor.com/ | sh
+      - run: meteor npm install
+      # install dockerize to wait for processes
+      - run:
+          name: install dockerize
+          command: wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz && sudo tar -C /usr/local/bin -xzvf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz && rm dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
+          environment:
+            DOCKERIZE_VERSION: v0.3.0
+      - save_cache:
+          name: Save Meteor Cache
+          key: meteor-cache-{{ checksum ".meteor/release" }}
+          paths:
+            - '~/.meteor'
+      - save_cache:
+          key: packages-cache-{{ checksum ".meteor/versions" }}
+          paths:
+            - './.meteor/local/build'
+            - './.meteor/local/bundler-cache'
+            - './.meteor/local/isopacks'
+            - './.meteor/local/plugin-cache'
+      # WebApp dependencies
+      - save_cache:
+          key: node-app-{{ checksum "package.json" }}
+          paths:
+            - node_modules
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - eve
+            - .meteor
+            - .npm
+
+  app:
+    working_directory: ~/eve/demo/eve-ui
+    docker:
+      - image: circleci/node:8.9
+      - image: trufflesuite/ganache-cli
+    steps:
+      - checkout:
+          path: ~/eve
+      - attach_workspace:
+          at: ~/
+      # deploy smart contracts to local ganache blockchain
+      - run:
+          command: ~/eve/node_modules/truffle/build/cli.bundled.js migrate --reset --network development
+          working_directory: ~/eve
+      - run:
+          command: ~/.meteor/meteor run
+          background: true
+      - run:
+          name: Wait for EVE to come online
+          command: dockerize -wait tcp://localhost:3000 -timeout 1m
+      - run:
+          name: Run Test
+          command: echo "There will be tests"
+
+workflows:
+  version: 2
+  node-truffle-meteor:
+    jobs:
+      - node
+      - app:
+          requires:
+            - node
