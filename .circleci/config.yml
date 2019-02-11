@@ -13,19 +13,19 @@ jobs:
           key: meteor-cache-{{ checksum ".meteor/release" }}
       - restore_cache:
           name: Restore NPM Cache
-          key: npm-cache-{{ checksum "~/eve/package-lock.json" }}
+          key: npm-cache-{{ checksum "~/eve/package.json" }}
       - restore_cache:
           name: Restore Meteor Package Cache
           key: packages-cache-{{ checksum ".meteor/versions" }}
       - restore_cache:
           name: Restore Node cache
-          key: node-app-{{ checksum "package-lock.json" }}
+          key: node-app-{{ checksum "package.json" }}
       - run:
           command: npm install
           working_directory: ~/eve
       - save_cache:
           name: Save NPM Cache
-          key: npm-cache-{{ checksum "~/eve/package-lock.json" }}
+          key: npm-cache-{{ checksum "~/eve/package.json" }}
           paths:
             - '~/.npm'
             - '~/eve/node_modules'
@@ -46,7 +46,7 @@ jobs:
             - './.meteor/local/plugin-cache'
       # WebApp dependencies
       - save_cache:
-          key: node-app-{{ checksum "package-lock.json" }}
+          key: node-app-{{ checksum "package.json" }}
           paths:
             - node_modules
       - persist_to_workspace:
@@ -71,7 +71,6 @@ jobs:
           command: ~/eve/node_modules/truffle/build/cli.bundled.js migrate --reset --network development
           working_directory: ~/eve
 #      - run: npm run start
-      - run: ls -lRh ~/.meteor
       - run: ~/.meteor/meteor run
       - run:
           name: Run Test
