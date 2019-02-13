@@ -1,8 +1,8 @@
-engUtils = require "./utils/enigma-utils.js"
+cryptoUtils = require "./utils/crypto.js"
 rlp = require "rlp"
 config = require "./config.js"
 
-derivedKey = engUtils.getDerivedKey(config.enclavePubKey, config.clientPrivKey)
+derivedKey = cryptoUtils.getDerivedKey(config.enclavePubKey, config.clientPrivKey)
 
 
 removeLeadingZeroes = (x) ->
@@ -12,7 +12,7 @@ removeLeadingZeroes = (x) ->
 
 
 encryptVote = (inVote, encryptionKey) ->
-  encryptedVote = engUtils.encryptMessage(encryptionKey, inVote)
+  encryptedVote = cryptoUtils.encryptMessage(encryptionKey, inVote)
   console.log "Your unprefixed encrypted vote is #{encryptedVote}"
 
   # add prefix padding
@@ -47,7 +47,7 @@ tallyVotes = (fetchEnigmaEvents, votingContract, web3Account) ->
 
   # decrypt votes
   decryptedVotes =
-    engUtils.decryptMessage(derivedKey, removeLeadingZeroes(encryptedVote.toString("hex"))) for encryptedVote in encryptedVotes
+    cryptoUtils.decryptMessage(derivedKey, removeLeadingZeroes(encryptedVote.toString("hex"))) for encryptedVote in encryptedVotes
 
   console.log "Decrypted votes: #{decryptedVotes}"
 
