@@ -24,16 +24,25 @@ encryptVote = (inVote, encryptionKey) ->
   encryptedVote
 
 
+hasVoted = (votingContract, votingAccont) ->
+  votingContract.methods.hasVoted(votingAccont).call()
+
+
 submitVote = (_vote, votingContract, votingAccount) ->
-  encryptedVote = encryptVote(_vote, derivedKey)
 
-  # audit submitted vote
-  voteID = await votingContract.methods.vote(encryptedVote).call()
+  alreadyVoted = await hasVoted(votingContract, votingAccount)
+  if (!alreadyVoted)
+    encryptedVote = encryptVote(_vote, derivedKey)
 
-  await votingContract.methods.vote(encryptedVote).send({ from: votingAccount })
-  submittedVote = await votingContract.methods.votes(voteID).call()
-  console.log "Your submitted vote is #{submittedVote}, which is#{if submittedVote is encryptedVote then "" else "not"} equal to your original vote"
-  submittedVote
+    # audit submitted vote
+    voteID = await votingContract.methods.vote(encryptedVote).call()
+
+    await votingContract.methods.vote(encryptedVote).send({ from: votingAccount })
+    submittedVote = await votingContract.methods.votes(voteID).call()
+    console.log "Your submitted vote is #{submittedVote}, which is#{if submittedVote is encryptedVote then "" else " not"} equal to your original vote"
+    submittedVote
+  else
+    console.log("You have already voted, skipping")
 
 
 tallyVotes = (fetchEnigmaEvents, votingContract, web3Account) ->
