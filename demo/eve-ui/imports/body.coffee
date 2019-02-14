@@ -1,20 +1,20 @@
 import "./body.html"
 import { ReactiveVar } from 'meteor/reactive-var'
 
-Web3Utils = require "./utils/web3Utils"
+Web3Tools = require "./utils/web3Tools"
 Voting = require './voting'
 
 Web3 = require "web3"
 web3 = window.web3
 
-web3 = Web3Utils.detectWeb3(web3)
+web3 = Web3Tools.detectWeb3(web3)
 
 
 # initialise contracts
 votingContractJSON = require "./abi/Voting.json"
-votingContract = Web3Utils.instantiateContract(web3, votingContractJSON)
+votingContract = Web3Tools.instantiateContract(web3, votingContractJSON)
 engContractJSON = require "./abi/Enigma.json"
-engContract = Web3Utils.instantiateContract(web3, engContractJSON)
+engContract = Web3Tools.instantiateContract(web3, engContractJSON)
 
 tally = new ReactiveVar(0)
 vote = new ReactiveVar("")
